@@ -1,17 +1,19 @@
-# Topic Detection Patterns
+# 话题检测模式
 
-## Keyword-Based Topic Classification
+> 参考文档：本文档与 `methodology.md`（深度分析框架、报告写作标准）和 `SKILL.md`（完整流水线定义、Phase 2 话题检测方法）配合使用。
 
-Each topic category has associated keywords for automated detection.
-Adapt these to the actual chat content by reading representative segments.
+## 基于关键词的话题分类
 
-### Template
+每个话题类别关联一组关键词，用于自动化检测。
+通过阅读代表性片段，将关键词适配到实际聊天内容。
+
+### 模板
 
 ```python
 TOPIC_KEYWORDS = {
     "topic_name": {
         "keywords": ["word1", "word2", ...],
-        "description": "Brief description of what this topic covers",
+        "description": "该话题涵盖内容的简要描述",
         "subtopics": {
             "subtopic_1": ["specific_keyword1", "specific_keyword2"],
             "subtopic_2": ["specific_keyword3", "specific_keyword4"],
@@ -20,89 +22,89 @@ TOPIC_KEYWORDS = {
 }
 ```
 
-### Example Categories
+### 默认分类模板
 
-| Category | Keywords (Chinese) | Keywords (English) |
-|----------|-------------------|-------------------|
-| Technology | AI, 编程, 代码, 服务器, VPN, 翻墙, GitHub, API | code, program, server, deploy |
-| Entertainment | 游戏, 动漫, 视频, 电影, 音乐, B站, 抖音 | game, anime, video, movie |
-| School | 考试, 作业, 绩点, 老师, 上课, 论文, 实验 | exam, homework, GPA, class |
-| Food | 吃, 喝, 食堂, 外卖, 水果, 饮料, 零食 | eat, food, drink, lunch |
-| Weather | 天气, 热, 冷, 下雨, 冰雹, 台风 | weather, hot, cold, rain |
-| Emotion | emo, 孤独, 开心, 难过, 焦虑, 压力 | happy, sad, lonely, stressed |
-| Social | 同学, 朋友, 室友, 班群, 社交 | friend, classmate, roommate |
-| Family | 家, 爸, 妈, 回家, 老家 | home, family, parents |
-| Hometown | 家乡, 老家, 广南, 昆明, 文山 | hometown, home city |
-| Career | 面试, 实习, 工作, 简历, 考研 | interview, job, career, resume |
+| 分类 | 关键词（中文） | 关键词（英文） |
+|------|--------------|--------------|
+| 科技/AI | AI, 编程, 代码, 服务器, VPN, GitHub, API, python | code, program, server, deploy |
+| 娱乐 | 游戏, 动漫, 视频, 电影, 音乐, B站, 抖音 | game, anime, video, movie |
+| 学业/职场 | 考试, 作业, 绩点, 老师, 上课, 论文, 面试, 实习, 考研 | exam, homework, GPA, class, interview, job |
+| 社交/关系 | 同学, 朋友, 室友, 家, 爸, 妈, 社交 | friend, classmate, roommate, family |
+| 日常生活 | 吃, 喝, 食堂, 外卖, 天气, 家乡, 购物 | eat, food, weather, hometown, shopping |
+| 情绪 | emo, 孤独, 开心, 难过, 焦虑, 压力 | happy, sad, lonely, stressed |
+| 二次元/游戏 | 二次元, 番剧, 原神, 崩坏, 王者, steam | anime, gacha, genshin |
+| Bot 互动 | 老婆, 抽取, 市场, 银币, 表情合成 | bot, gacha, wife |
 
-## Topic Discovery Process
+## 话题发现流程
 
-### Step 1: Read Segments
+### 步骤 1：阅读片段
 
-Read 8-10 segments from the chat file, evenly distributed across the date range:
-- Beginning (day 1-3)
-- 25% point
-- 50% point
-- 75% point
-- End (last 3 days)
-- 3-5 random points
+从聊天文件中读取 8-10 个片段，均匀分布在日期范围内：
+- 开头（第 1-3 天）
+- 25% 处
+- 50% 处
+- 75% 处
+- 末尾（最后 3 天）
+- 3-5 个随机位置
 
-For each segment, note:
-1. What topics appear
-2. What keywords are used
-3. Who initiates each topic
+对每个片段，记录：
+1. 出现了哪些话题
+2. 使用了哪些关键词
+3. 谁发起了每个话题
 
-### Step 2: Build Keyword List
+### 步骤 2：构建关键词列表
 
-Based on discovered topics, create a comprehensive keyword list.
-Include variations and slang found in the chat.
+根据发现的话题，创建全面的关键词列表。
+包含聊天中发现的变体和网络用语。
 
-### Step 3: Full Scan
+### 步骤 3：全量扫描
 
-Run keyword matching against all messages to get topic frequencies.
+对所有消息执行关键词匹配，获取话题频率。
 
-### Step 4: Deep Analysis
+### 步骤 4：深度分析
 
-For each topic with significant frequency (>5% of messages):
-1. Collect all relevant messages
-2. Group into sub-topics
-3. Analyze temporal patterns
-4. Note emotional dimensions
-5. Write report with evidence
+对每个频率显著（占消息数 >5%）的话题：
+1. 收集所有相关消息
+2. 分组为子话题
+3. 分析时间模式
+4. 记录情感维度
+5. 撰写附证据的报告
 
-## Topic Report Template
+## 话题报告模板
 
 ```markdown
-# 话题专题报告：[Topic Name]
+# 话题专题报告：[话题名称]
 
 ## 一、话题概览
-[Topic]话题在两人聊天中出现频率约X次，占比Y%。
-主要集中在Z时间段。
+[话题名称]话题在聊天中出现频率约 X 次，占比 Y%。
+主要集中在 Z 时间段。
 
 ## 二、详细子话题分析
 
-### 2.1 [Subtopic 1]
+### 2.1 [子话题 1]
 ```
 用户A：原始聊天内容
 用户B：原始聊天内容
 ```
 **观察：** 基于证据的分析...
 
-### 2.2 [Subtopic 2]
+### 2.2 [子话题 2]
 ...
 
+> 实际报告需包含 5+ 个子话题（详见 methodology.md 3.3 节）。此处省略后续子话题模板。
+
 ## 三、时间演变
-[How the topic frequency changes over time]
+[话题频率随时间的变化情况]
 
 ## 四、情感维度
-[Emotional content within this topic]
+[该话题中的情感内容]
 
 ## 五、关系意义
-[What this topic reveals about the relationship]
+[该话题揭示了什么关系特征]
 
 ## 六、社会文化解读
-[Broader sociocultural context]
+[更广泛的社会文化背景]
 
 ## 七、总结
-[Summary with key insights]
+[关键洞察总结]
 ```

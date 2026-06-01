@@ -1,43 +1,43 @@
-# Personality Profiling Guide
+# 人格画像撰写指南
 
-## Core Principle
+## 核心原则
 
 > 严格基于聊天记录中的可观察行为，不做推测，不以偏概全。
 > 只因为我们看到了他们在一段关系中的一个面向，不代表这就是他们的全部。
 
-## Chat Mode Differences
+## 私聊与群聊的差异
 
-### Private Chat (2 senders)
-- Focus on relationship dynamics between two people
-- Communication style comparison
-- Emotional exchange patterns
-- Relationship evolution over time
-- Who initiates, who responds
+### 私聊（2 个发送者）
+- 聚焦两人之间的关系动态
+- 沟通风格对比
+- 情感交流模式
+- 关系随时间的演变
+- 谁主动发起，谁被动回应
 
-### Group Chat (N senders)
-- Focus on individual communication style and social role
-- Bot interaction patterns (wife-collecting, gacha, economy)
-- Reply target mapping (social network)
-- Role archetype identification
-- Influence and reach within the group
+### 群聊（N 个发送者）
+- 聚焦个人沟通风格和社交角色
+- Bot 互动模式（老婆收集、抽卡、经济系统）
+- 回复目标映射（社交网络）
+- 角色原型识别
+- 在群内的影响力和辐射范围
 
-## Analysis Dimensions
+## 分析维度
 
-### 1. Language Style (语言风格)
+### 1. 语言风格
 
-Analyze observable patterns in how each person writes:
+分析每个人写作时的可观察模式：
 
-| Dimension | What to Look For |
-|-----------|-----------------|
-| Vocabulary | High-frequency words, slang, abbreviations, signature phrases |
-| Sentence length | Short bursts vs. complete sentences, avg chars per message |
-| Language mixing | English/Chinese code-switching patterns |
-| Punctuation | Period usage, exclamation marks, ellipsis, 。。 vs ... |
-| Emoji/Stickers | Frequency, types, contexts, custom emoji usage |
-| Tone markers | Formal vs. casual, serious vs. playful |
-| Signature phrases | Repeated expressions unique to this person |
+| 维度 | 关注点 |
+|------|--------|
+| 词汇 | 高频词、俚语、缩写、标志性用语 |
+| 句长 | 短句爆发 vs 完整句子，每条消息平均字数 |
+| 语言混用 | 中英夹杂模式 |
+| 标点 | 句号使用、感叹号、省略号、。。 vs ... |
+| 表情/贴图 | 频率、类型、使用场景、自定义表情 |
+| 语气标记 | 正式 vs 随意，严肃 vs 活泼 |
+| 标志性用语 | 该用户独有的重复表达 |
 
-**Evidence format:**
+**证据格式：**
 ```
 高频词汇表：
 | 词汇 | 功能 | 频率 | 典型语境 |
@@ -45,28 +45,28 @@ Analyze observable patterns in how each person writes:
 | xxx  | 惊讶 | 高频 | "xxx太离谱了" |
 ```
 
-### 2. Communication Strategy (沟通策略)
+### 2. 沟通策略
 
-| Dimension | Analysis |
-|-----------|----------|
-| Initiative ratio | Who starts conversations/topics? |
-| Response style | Minimal ("ok") vs. elaborate |
-| Topic switching | When and how they change topics |
-| Silence patterns | When they go quiet, for how long |
-| Message density | Burst patterns vs. even distribution |
-| Active hours | Peak activity time slots |
-| Message type preference | Text vs image vs forward |
+| 维度 | 分析内容 |
+|------|----------|
+| 主动性比例 | 谁发起对话/话题？ |
+| 回应风格 | 极简回复（"ok"）vs 详细回复 |
+| 话题切换 | 何时、如何切换话题 |
+| 沉默模式 | 何时沉默，持续多久 |
+| 消息密度 | 突发模式 vs 均匀分布 |
+| 活跃时段 | 高峰活跃时间段 |
+| 消息类型偏好 | 文本 vs 图片 vs 转发 |
 
-### 3. Interest Map (兴趣图谱)
+### 3. 兴趣图谱
 
-For each interest area, provide:
-- Evidence (specific chat quotes)
-- Frequency (how often mentioned, keyword count)
-- Depth (casual mention vs. detailed discussion)
-- Role (active pursuer vs. passive recipient)
+对每个兴趣领域，提供：
+- 证据（具体聊天引用）
+- 频率（提及频率，关键词计数）
+- 深度（随口一提 vs 深入讨论）
+- 角色（主动追求者 vs 被动接收者）
 
-**Keyword-based interest detection:**
-Use the keyword profile from chat_stats.json to identify interests:
+**基于关键词的兴趣检测：**
+使用 chat_stats.json 中的关键词画像识别兴趣：
 ```
 | 兴趣领域 | 关键词命中 | 占比 | 典型语境 |
 |----------|-----------|------|----------|
@@ -74,31 +74,31 @@ Use the keyword profile from chat_stats.json to identify interests:
 | 二次元   | 80        | 23%  | "番剧"、"声优" |
 ```
 
-### 4. Emotional Expression (情感表达)
+### 4. 情感表达
 
-| Type | Description | Evidence Required |
-|------|-------------|-------------------|
-| Direct | "我很伤心" | Exact quote |
-| Indirect | "困死了" (implies frustration) | Quote + context |
-| Humor | Jokes about serious topics | Quote showing humor |
-| Avoidance | Topic switching when emotional | Pattern of switches |
-| Dramatic | Exaggerated emotional expressions | Quote showing intensity |
+| 类型 | 描述 | 需要的证据 |
+|------|------|------------|
+| 直接表达 | "我很伤心" | 原始引用 |
+| 间接表达 | "困死了"（暗示沮丧） | 引用 + 上下文 |
+| 幽默 | 用玩笑化解严肃话题 | 展示幽默的引用 |
+| 回避 | 情绪化时切换话题 | 切换模式 |
+| 夸张 | 夸张的情感表达 | 展示强度的引用 |
 
-### 5. Social Interaction (社交互动)
+### 5. 社交互动
 
-**Private chat:**
-- Who initiates more
-- Response time patterns
-- Emotional support patterns
-- Conflict resolution style
+**私聊：**
+- 谁更主动发起
+- 回复时间模式
+- 情感支持模式
+- 冲突解决风格
 
-**Group chat:**
-- Reply target analysis (who do they talk to most?)
-- Social role: initiator, responder, lurker, bot user, meme spreader
-- Influence: do others reply to them? Do they start trends?
-- Connection strength with specific users
+**群聊：**
+- 回复目标分析（最常和谁对话？）
+- 社交角色：发起者、回应者、潜水者、Bot 用户、梗传播者
+- 影响力：别人是否回复他们？是否引领话题？
+- 与特定用户的连接强度
 
-**Reply target table:**
+**回复目标表：**
 ```
 | 回复对象 | 次数 | 占比 | 关系特征 |
 |----------|------|------|----------|
@@ -106,24 +106,24 @@ Use the keyword profile from chat_stats.json to identify interests:
 | 用户B    | 50   | 15%  | 偶尔交流 |
 ```
 
-### 6. Bot Interaction Patterns (Group Chat)
+### 6. Bot 互动模式（群聊）
 
-Many group chats have bot accounts that provide interactive systems:
+许多群聊有提供互动系统的 Bot 账号：
 
-| Pattern | Description | Analysis Focus |
-|---------|-------------|----------------|
-| Wife-collecting | "老婆" gacha/market system | Engagement frequency, trading patterns |
-| Economy | Virtual currency (coins, silver) | Earning/spending behavior |
-| Card system | Trading card games | Collection patterns, rarity awareness |
-| Custom commands | User-defined bot commands | Creativity, community contribution |
+| 模式 | 描述 | 分析重点 |
+|------|------|----------|
+| 老婆收集 | "老婆"抽卡/市场系统 | 参与频率，交易模式 |
+| 经济系统 | 虚拟货币（银币等） | 赚取/消费行为 |
+| 卡牌系统 | 集换式卡牌游戏 | 收集模式，稀有度意识 |
+| 自定义命令 | 用户自定义 Bot 命令 | 创造力，社区贡献 |
 
-### 7. Key Moments (关键时刻)
+### 7. 关键时刻
 
-Select 5-10 defining chat excerpts that best illustrate the person's character:
+选择 5-10 条最能体现该用户性格的聊天片段：
 
-**Format for each moment:**
+**每条时刻的格式：**
 ```markdown
-### 场景X：[Brief Title]
+### 场景X：[简短标题]
 
 **原始对话：**
 ```
@@ -131,27 +131,27 @@ Select 5-10 defining chat excerpts that best illustrate the person's character:
 ```
 
 **分析：**
-这段对话体现了[person]的[trait]。
-具体表现为：[evidence-based analysis]。
+这段对话体现了[用户]的[特质]。
+具体表现为：[基于证据的分析]。
 ```
 
-## Limitations Template
+## 局限性模板
 
-Every personality report MUST end with this section:
+每篇人格画像必须以此段落结尾：
 
 ```markdown
 ## 局限性声明
 
 本报告存在以下根本性局限：
 
-1. **单一关系视角：** 聊天记录仅展示了[Name]在此群聊/对话中的表现，
+1. **单一关系视角：** 聊天记录仅展示了[用户名]在此群聊/对话中的表现，
    无法了解其在家庭、其他朋友、恋人、老师等关系中的表现。
 
 2. **文字沟通局限：** 聊天记录只能反映文字表达，无法观察到
    语气、表情、肢体语言等非文字信息。
 
 3. **选择性表达：** 人在不同社交场景中会有不同的自我呈现方式，
-   这段聊天中的[Name]不一定代表其在其他场景中的状态。
+   这段聊天中的[用户名]不一定代表其在其他场景中的状态。
 
 4. **时间范围有限：** 聊天记录仅覆盖[start]至[end]（约X天），
    无法反映长期人格特征的变化。
@@ -163,54 +163,54 @@ Every personality report MUST end with this section:
    群体动态会影响个体行为。
 
 **因此，本报告中的所有描述都应被视为"在这段特定关系中的可观察行为"，
-而非对[Name]整体人格的判断。**
+而非对[用户名]整体人格的判断。**
 ```
 
-## Writing Quality Standards
+## 写作质量标准
 
-### DO:
-- Use tables for structured comparisons
-- Include 2-5 line chat quotes as evidence
-- Use qualifying language ("从聊天中可观察到", "在这段关系中表现出")
-- Acknowledge uncertainty ("可能", "推测")
-- Compare users side-by-side (private chat)
-- Analyze social role and influence (group chat)
-- Include keyword statistics as evidence
-- Track temporal patterns (when they're active, how behavior changes)
+### 应该做的：
+- 使用表格呈现结构化对比
+- 包含 2-5 行聊天引用作为证据
+- 使用限定性语言（"从聊天中可观察到"、"在这段关系中表现出"）
+- 承认不确定性（"可能"、"推测"）
+- 并排对比用户（私聊）
+- 分析社交角色和影响力（群聊）
+- 包含关键词统计作为证据
+- 追踪时间模式（何时活跃，行为如何变化）
 
-### DON'T:
-- Make sweeping personality judgments
-- Speculate about mental health or disorders
-- Assume motivations without evidence
-- Use absolute language ("总是", "从不")
-- Include actual personal information in examples (phone numbers, addresses)
-- Quote sensitive content verbatim without context
-- Present single observations as established patterns
+### 不应该做的：
+- 做笼统的人格判断
+- 推测心理健康或障碍
+- 在无证据的情况下假设动机
+- 使用绝对化语言（"总是"、"从不"）
+- 在示例中包含真实个人信息（手机号、地址）
+- 在无上下文的情况下逐字引用敏感内容
+- 将单一观察当作已确立的模式
 
-## Minimum Content Requirements
+## 最低内容要求
 
-| Section | Minimum Evidence |
-|---------|-----------------|
-| Language style | 10+ example quotes |
-| Communication strategy | 5+ pattern examples |
-| Interest map | 3+ interests with evidence |
-| Emotional expression | 3+ direct/indirect examples |
-| Social interaction | 3+ reply target examples |
-| Bot interaction (group) | 2+ bot interaction examples |
-| Key moments | 5-10 full chat excerpts |
-| Limitations | 5+ specific limitations listed |
+| 章节 | 最低证据量 |
+|------|------------|
+| 语言风格 | 10+ 条示例引用 |
+| 沟通策略 | 5+ 条模式示例 |
+| 兴趣图谱 | 3+ 个兴趣领域，附证据 |
+| 情感表达 | 3+ 条直接/间接示例 |
+| 社交互动 | 3+ 条回复目标示例 |
+| Bot 互动（群聊） | 2+ 条 Bot 互动示例 |
+| 关键时刻 | 5-10 条完整聊天片段 |
+| 局限性声明 | 5+ 条具体局限 |
 
-## Group Chat Role Archetypes
+## 群聊角色原型
 
-When profiling group chat users, identify their role archetype:
+为群聊用户画像时，识别其角色原型：
 
-| Archetype | Characteristics | Evidence |
-|-----------|----------------|----------|
-| 话题驱动者 | Frequently starts new topics | High topic_initiation count |
-| 回应者 | Primarily responds to others | Low initiation, high response |
-| 潜水者 | Rarely speaks, mostly observes | Low message count, long gaps |
-| Bot达人 | Heavy bot interaction | High bot mention count |
-| 梗传播者 | Spreads and evolves memes | High forward count, meme keywords |
-| 情感枢纽 | Connects emotionally with many | High reply_target diversity |
-| 图片党 | Primarily communicates via images | High image/text ratio |
-| 文学家 | Writes long, detailed messages | High avg_message_length |
+| 原型 | 特征 | 证据 |
+|------|------|------|
+| 话题驱动者 | 频繁发起新话题 | topic_initiation 计数高 |
+| 回应者 | 主要回应他人 | 低发起、高回应 |
+| 潜水者 | 很少发言，主要观察 | 低消息数、长时间间隔 |
+| Bot达人 | 大量 Bot 互动 | 高 bot 提及计数 |
+| 梗传播者 | 传播和演变梗 | 高转发数、梗关键词 |
+| 情感枢纽 | 与多人有情感连接 | 高 reply_target 多样性 |
+| 图片党 | 主要通过图片交流 | 高图片/文字比 |
+| 文学家 | 撰写长篇详细消息 | 高平均消息长度 |

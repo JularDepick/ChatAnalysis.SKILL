@@ -1,269 +1,276 @@
-# Chat Analysis Methodology
+# 聊天分析方法论
 
-## 1. Data Parsing Strategy
+> 本文档提供的框架和指标为通用参考。Agent 应根据实际聊天数据灵活适配，而非机械套用。
 
-### 1.1 Chat Log Structure Detection
+## 1. 数据解析策略
 
-Most chat exports follow one of two patterns:
+### 1.1 聊天日志结构检测
 
-**Text Format:**
+大多数聊天导出遵循以下两种模式之一（实际格式可能有变体，Agent 应根据数据灵活适配）：
+
+**文本格式：**
 ```
-[Date/Time Header]
-[Sender]: [Content]
-[Sender]: [Content]
+[日期/时间头]
+[发送者]: [内容]
+[发送者]: [内容]
 ...
-[Next Date/Time Header]
+[下一日期/时间头]
 ```
 
-**JSONL Format:**
+**JSONL 格式：**
 ```
 {"id":"...","timestamp":1234567890000,"sender":{"uin":"123","name":"张三"},"type":"text","content":{"text":"内容"}}
 {"id":"...","timestamp":1234567891000,"sender":{"uin":"456","name":"李四"},"type":"text","content":{"text":"回复"}}
 ```
 
-Detection approach:
-1. Check if input is a directory (JSONL) or file (text)
-2. For text: Read first 200 lines, identify date/sender patterns
-3. For JSONL: Read first 5-10 lines, identify field structure
+检测方式：
+1. 检查输入是目录（JSONL）还是文件（文本）
+2. 文本格式：读取前 200 行，识别日期/发送者模式
+3. JSONL 格式：读取前 5-10 行，识别字段结构
 
-### 1.2 Message Classification
+### 1.2 消息分类
 
-Each parsed message should be classified:
+每条解析后的消息应分类：
 
-| Type | Detection | Handling |
-|------|-----------|----------|
-| Text | Normal text content | Count words, extract keywords |
-| Image | `[图片]`, `[Image]`, image URL, `type: "image"` | Count, categorize by context |
-| Card/Link | `[卡片消息:...]`, URL preview | Extract title, categorize |
-| Forward | `type: "forward"`, forwarded content | Count, analyze source patterns |
-| Reply | `> quoted text`, `type: "reply"` | Parse reply target, count reply chains |
-| System | 撤回, 红包, 加入群聊, `system: true` | Filter out or categorize separately |
-| Recalled | `recalled: true` | Note but exclude from content analysis |
+| 类型 | 检测方式 | 处理方式 |
+|------|----------|----------|
+| 文本 | 普通文本内容 | 计算字数，提取关键词 |
+| 图片 | `[图片]`、`[Image]`、图片 URL、`type: "image"` | 计数，按上下文分类 |
+| 卡片/链接 | `[卡片消息:...]`、URL 预览 | 提取标题，分类 |
+| 转发 | `type: "forward"`、转发内容 | 计数，分析来源模式 |
+| 回复 | `> 引用文本`、`type: "reply"` | 解析回复目标，统计回复链 |
+| 系统 | 撤回、红包、加入群聊、`system: true` | 过滤或单独分类 |
+| 撤回 | `recalled: true` | 记录但排除出内容分析 |
 
-### 1.3 Sender Identification
+### 1.3 发送者识别
 
-**Private chat (2 senders):**
-- Identify "me" (the user) vs "other"
-- Normalize "me" label for consistent analysis
+**私聊（2 个发送者）：**
+- 识别"我"（用户）和"对方"
+- 规范化"我"的标签以保持分析一致性
 
-**Group chat (N senders):**
-- Use UIN (QQ number) or equivalent as stable key
-- Resolve display name: groupCard > name > nickname
-- Track name changes over time (groupCard may change)
-- Identify bot accounts (high message volume, automated patterns)
+**群聊（N 个发送者）：**
+- 使用 UIN（QQ 号）或等效标识作为稳定键
+- 解析显示名：groupCard > name > nickname
+- 同名用户消歧：多个 UIN 共享同一显示名时，后缀 `(UIN)` 区分
+- 追踪名称随时间的变化（groupCard 可能变更）
+- 识别 Bot 账号（高消息量、自动化模式）
 
-## 2. Statistical Analysis Dimensions
+## 2. 统计分析维度
 
-### 2.1 Basic Statistics
+### 2.1 基础统计
 
-| Metric | How to Compute |
-|--------|---------------|
-| Total messages | Count of all parsed messages |
-| Valid messages | Exclude system and recalled messages |
-| Active days | Count of unique dates with ≥1 message |
-| Date range | min(date) to max(date) |
-| Messages per sender | Group by sender, count |
-| Message types | Group by message_type, count |
-| Average message length | mean(char_count) per text message |
+| 指标 | 计算方式 |
+|------|----------|
+| 总消息数 | 所有解析消息的计数 |
+| 有效消息数 | 排除系统消息和撤回消息 |
+| 活跃天数 | 有 ≥1 条消息的唯一日期数 |
+| 日期范围 | min(date) 到 max(date) |
+| 每用户消息数 | 按发送者分组计数 |
+| 消息类型 | 按 message_type 分组计数 |
+| 平均消息长度 | 每条文本消息的 mean(char_count) |
 
-### 2.2 Time Distribution
+### 2.2 时间分布
 
-| Dimension | Grouping | Insight |
-|-----------|----------|---------|
-| Hourly | Group by hour (0-23) | Peak activity hours |
-| Daily | Group by date | Activity trends, streaks |
-| Weekday | Group by day_of_week | Work vs weekend patterns |
-| Monthly | Group by month | Long-term trends |
+| 维度 | 分组方式 | 洞察 |
+|------|----------|------|
+| 小时 | 按小时（0-23）分组 | 高峰活跃时段 |
+| 每日 | 按日期分组 | 活跃趋势、连续天数 |
+| 星期 | 按星期几分组 | 工作日 vs 周末模式 |
+| 月度 | 按月份分组 | 长期趋势 |
 
-Cross-analysis:
-- Hour x Weekday matrix → find hottest/coldest time slots
-- Daily first/last message → sleep pattern inference
-- Gap analysis → silence periods, conversation boundaries
-- Activity cliffs → tier boundaries in group chat rankings
+交叉分析：
+- 小时 × 星期矩阵 → 找最热/最冷时段
+- 每日首/末条消息 → 推断睡眠模式
+- 间隔分析 → 沉默期、对话边界
+- 活动断层 → 群聊排名的分层边界
 
-### 2.3 Content Analysis
+### 2.3 内容分析
 
-**Word Frequency (Chinese):**
-1. Filter to text messages only
-2. Extract Chinese character n-grams (2-4 chars)
-3. Remove stop words (的, 了, 是, 我, 你, 他, etc.)
-4. Count frequency, take top 50-100
+**词频（中文）：**
+1. 仅筛选文本消息
+2. 提取中文字符 n-gram（2-4 字）
+3. 移除停用词（的、了、是、我、你、他 等）
+4. 统计频率，取前 50-100
 
-**Word Frequency (English/Mixed):**
-1. Extract English words (regex: `[a-zA-Z]{2,}`)
-2. Filter common stop words
-3. Count frequency
+**词频（英文/混合）：**
+1. 提取英文词（正则：`[a-zA-Z]{2,}`）
+2. 过滤常见停用词
+3. 统计频率
 
-**Keyword Matching:**
-Define topic-specific keyword lists, count matches per topic. Adapt to actual chat content — read multiple segments to discover topic-specific vocabulary.
+**关键词匹配：**
+定义话题专属关键词列表，统计每个话题的匹配数。根据实际聊天内容适配——阅读多个片段以发现话题专属词汇。
 
-### 2.4 Interaction Patterns
+### 2.4 互动模式
 
-**Conversation Rounds:**
-- Define a "round" as continuous messages without a long gap (default: 30 min)
-- Count messages per round
-- Track who initiates each round
-- Compute round length distribution
+**对话轮次：**
+- 定义"轮次"为无长间隔的连续消息（默认 30 分钟）
+- 统计每轮消息数
+- 追踪每轮的发起者
+- 计算轮次长度分布
 
-**Reply Speed:**
-- For consecutive messages from different senders, compute time delta
-- Report median and mean reply times
-- Only consider replies within 1 hour
-- Group by sender for per-user analysis
+**回复速度：**
+- 对连续的不同发送者消息计算时间差
+- 报告中位数和平均回复时间
+- 仅考虑 1 小时内的回复
+- 按发送者分组进行逐用户分析
 
-**Initiation Patterns (Private Chat):**
-- Count topic initiations per sender
-- Track who responds vs who initiates
-- Compute active/passive ratio per sender
+**发起模式（私聊）：**
+- 统计每人的话题发起数
+- 追踪谁回应 vs 谁发起
+- 计算每人的主动/被动比
 
-**Social Network (Group Chat):**
-- Track reply targets (who replies to whom)
-- Compute social connection strength
-- Identify key connectors and isolated users
+**社交网络（群聊）：**
+- 追踪回复目标（谁回复谁）
+- 计算社交连接强度
+- 识别关键连接者和孤立用户
 
-### 2.5 Media Analysis
+### 2.5 媒体分析
 
-| Metric | Method |
-|--------|--------|
-| Image count | Count image-type messages |
-| Image density | images per message |
-| Forward messages | Count and categorize forwarded content |
-| Image-to-text ratio | total_images / total_text_messages |
-| Image sender distribution | Who shares the most images |
-| Image time distribution | When images are shared |
+| 指标 | 方法 |
+|------|------|
+| 图片数 | 统计图片类型消息 |
+| 图片密度 | 每条消息的图片数 |
+| 转发消息 | 统计并分类转发内容 |
+| 图文比 | total_images / total_text_messages |
+| 图片发送者分布 | 谁分享了最多图片 |
+| 图片时间分布 | 图片在何时被分享 |
 
-## 3. Deep Analysis Framework
+## 3. 深度分析框架
 
-### 3.1 Activity Cliff Detection (Group Chat)
+### 3.1 活动断层检测（群聊）
 
-For group chats with many participants, identify "activity cliffs":
+对于参与者较多的群聊，识别"活动断层"：
 
 ```
-User A: 2638 messages  ─┐
-User B: 2308 messages   │ Tier 1 (very active)
-User C: 1500 messages  ─┘ ← Cliff 1 (43% drop)
-User D: 1200 messages  ─┐
-User E: 800 messages    │ Tier 2 (active)
-                       ─┘ ← Cliff 2
-User F: 300 messages   ──  Tier 3 (casual)
+用户 A: 2638 条消息  ─┐
+用户 B: 2308 条消息   │ Tier 1（非常活跃）
+用户 C: 1500 条消息  ─┘ ← 断层 1（下降 43%）
+用户 D: 1200 条消息  ─┐
+用户 E: 800 条消息    │ Tier 2（活跃）
+                     ─┘ ← 断层 2
+用户 F: 300 条消息   ──  Tier 3（偶尔发言）
 ```
 
-Detection criteria:
-1. Drop percentage > 15% AND absolute drop > 80 messages
-2. OR drop is 2.5x larger than average of next 3 drops
+检测标准：
+1. 下降百分比 > 15% 且绝对下降 > 80 条消息
+2. 或下降幅度是接下来 3 次下降平均值的 2.5 倍
 
-Report tiers to user for decisions on how many users to profile individually.
+向用户报告分层信息，用于决定单独生成多少用户的画像。
 
-### 3.2 Topic Analysis Pipeline
+### 3.2 话题分析流水线
 
-1. **Discovery Phase**: Read 8-10 segments across the full date range to identify all major topics
-2. **Classification Phase**: Create keyword lists for each topic, scan full dataset
-3. **Deep Dive Phase**: For each topic, collect representative quotes, analyze patterns
-4. **Cross-Analysis Phase**: Topic x Time, Topic x Sender, Topic x Emotion
+1. **发现阶段**：阅读 8-10 个均匀分布在时间范围内的片段，识别所有主要话题
+2. **分类阶段**：为每个话题创建关键词列表，全量扫描
+3. **深潜阶段**：为每个话题收集代表性引文，分析模式
+4. **交叉分析阶段**：话题 × 时间、话题 × 发送者、话题 × 情绪
 
-**Group chat specific topics:**
-- Bot interaction patterns (wife-collecting, gacha systems, economy)
-- Forward/搬屎 culture
-- Group events (K歌, 线下聚会)
-- Internal conflicts and drama
-- Meme propagation chains
+**群聊特有话题：**
+- Bot 互动模式（老婆收集、抽卡系统、经济系统）
+- 转发/搬屎文化
+- 群事件（K歌、线下聚会）
+- 内部冲突和戏剧
+- 梗传播链
 
-### 3.3 Topic Report Structure
+### 3.3 话题报告结构
 
-Each topic report should contain:
-1. 话题概览 (Overview) — frequency, percentage, time span
-2. 详细子话题分析 (Sub-topics) — 5+ sub-topics with evidence
-3. 时间演变 (Evolution) — how the topic changes over time
-4. 情感维度 (Emotional dimension) — sentiment within the topic
-5. 关系意义 (Relationship significance) — what this topic reveals
-6. 社会文化解读 (Sociocultural interpretation) — broader context
-7. 总结 (Summary) — key insights
+每篇话题报告应包含：
+1. 话题概览 — 频率、占比、时间跨度
+2. 详细子话题分析 — 5+ 个子话题，附证据
+3. 时间演变 — 话题如何随时间变化
+4. 情感维度 — 话题内的情绪倾向
+5. 关系意义 — 这个话题揭示了什么
+6. 社会文化解读 — 更广泛的文化背景
+7. 总结 — 关键洞察
 
-### 3.4 Personality Profiling Framework
+### 3.4 人格画像框架
 
-**Private chat structure:**
-1. 基本信息 (Basic info)
-2. 语言风格 (Language style)
-3. 沟通策略 (Communication strategy)
-4. 兴趣图谱 (Interest map)
-5. 情感表达 (Emotional expression)
-6. 社交互动 (Social interaction)
-7. 关键时刻 (Key moments)
-8. 局限性声明 (Limitations)
+**私聊结构：**
+1. 基本信息
+2. 语言风格
+3. 沟通策略
+4. 兴趣图谱
+5. 情感表达
+6. 社交互动
+7. 关键时刻
+8. 局限性声明
 
-**Group chat structure (extended):**
-1. 基本信息 (Basic info) — message count, active days, rank
-2. 语言风格 (Language style) — vocabulary, sentence patterns, signature phrases
-3. 沟通策略 (Communication strategy) — topic initiation, response patterns
-4. 兴趣图谱 (Interest map) — keyword-based interest areas
-5. 社交互动 (Social interaction) — reply targets, social role
-6. 情感表达 (Emotional expression) — humor style, emotional range
-7. Bot互动模式 (Bot interaction) — wife-collecting, gacha, economy
-8. 关键时刻 (Key moments) — 5-10 representative excerpts
-9. 局限性声明 (Limitations)
-10. 附录 (Appendix) — additional data tables
+**群聊结构（扩展）：**
+1. 基本信息 — 消息数、活跃天数、排名
+2. 语言风格 — 词汇、句式、标志性用语
+3. 沟通策略 — 话题发起、回应模式
+4. 兴趣图谱 — 基于关键词的兴趣领域
+5. 社交互动 — 回复目标、社交角色
+6. 情感表达 — 幽默风格、情感范围
+7. Bot 互动模式 — 老婆收集、抽卡、经济系统
+8. 关键时刻 — 5-10 条代表性摘录
+9. 局限性声明
+10. 附录 — 额外数据表格
 
-### 3.5 Brilliant & Legendary Quotes Curation (Group Chat)
+> 注：私聊与群聊的章节顺序因分析侧重不同而有差异。
 
-**Selection criteria for 精彩发言 (Brilliant):**
-- 接龙/刷屏: Mass coordinated responses
-- 神回复: Unexpectedly clever or funny replies
-- 经典对话: Multi-turn conversations with comedic timing
-- 梗传播: Moments when memes spread or evolve
-- 犀利吐槽: Sharp wit or observational humor
-- 荒诞对话: Surreal or absurdist exchanges
+### 3.5 精彩发言 / 神人发言筛选（群聊）
 
-**Selection criteria for 神人发言 (Legendary):**
-- Abstract/absurdist literary works
-- Copypasta-worthy monologues
-- Dramatic emotional outbursts
-- Philosophical rants
-- Viral moments that defined the group culture
+**精彩发言筛选标准：**
+- 神回复：出人意料的巧妙或幽默回复
+- 经典对话：多轮对话中的喜剧节奏
+- 接龙/刷屏：大规模协调响应
+- 梗传播：梗传播或演变的关键时刻
+- 犀利吐槽：尖锐的机智或观察性幽默
+- 荒诞对话：超现实或荒诞的交流
 
-**For each entry, provide:**
-1. Original chat text (preserve integrity)
-2. Context explanation (cause and effect)
-3. Quoteblock analysis (why it's funny/notable)
-4. High-risk warning if applicable (red border, no censorship)
+**神人发言筛选标准：**
+- 抽象/荒诞文学作品
+- 值得复制粘贴的独白
+- 戏剧性的情感爆发
+- 哲学长文
+- 定义群文化的病毒传播时刻
 
-### 3.6 Evidence Standards
+**每条发言需提供：**
+1. 原始聊天记录（保持完整性）
+2. 上下文说明（因果关系）
+3. 引用块分析（为什么有趣/值得注意）
+4. 高风险警告（如适用，红边框，不审查）
 
-**Good evidence:**
+**敏感内容处理：** 详见 `sensitive_content.md`，包括敏感内容分类、默认处置流程、形式目录派生等规则。
+
+### 3.6 证据标准
+
+**好的证据：**
 ```
 用户A：今天考试考砸了，心情很差
 用户B：别想了，出去吃顿好的
 ```
-→ Evidence of: emotional support behavior, coping through food
+→ 证据指向：情感支持行为，通过食物应对压力
 
-**Bad evidence:**
-"用户A seems to be a negative person"
-→ No direct quote, subjective judgment without basis
+**差的证据：**
+"用户A 似乎是个消极的人"
+→ 无直接引文，无依据的主观判断
 
-**Rules:**
-- Every claim needs ≥1 direct quote
-- Quotes should be 2-5 lines of context (not single words)
-- Distinguish observation from inference
-- Use qualifying language for inferences
+**规则：**
+- 每个论断需要 ≥1 条直接引文
+- 引文应为 2-5 行上下文（非单个词）
+- 区分观察和推断
+- 推断使用限定性语言
 
-## 4. Report Writing Standards
+## 4. 报告写作标准
 
-### 4.1 Structure
+### 4.1 结构
 
-Every report file should follow:
+每篇报告文件应遵循：
 ```markdown
-# Title
+# 标题
 
-## 一、Section 1
-### 1.1 Sub-section
-Content with evidence...
+## 一、章节 1
+### 1.1 子章节
+内容附证据...
 
-## 二、Section 2
+## 二、章节 2
 ...
 ```
 
-### 4.2 Evidence Format
+### 4.2 证据格式
 
-Use code blocks for chat quotes:
+使用代码块引用聊天记录：
 ```markdown
 **观察描述：**
 ```
@@ -273,80 +280,92 @@ Use code blocks for chat quotes:
 **分析：** 基于证据的分析...
 ```
 
-### 4.3 Table Usage
+### 4.3 表格使用
 
-Use tables for:
-- Comparative data (Person A vs Person B)
-- Frequency distributions
-- Timeline summaries
-- Classification matrices
-- Per-user statistics
+适用场景：
+- 对比数据（用户 A vs 用户 B）
+- 频率分布
+- 时间线摘要
+- 分类矩阵
+- 逐用户统计
 
-### 4.4 Length Guidelines
+### 4.4 长度指南
 
-| Report Type | Minimum Lines | Target Lines |
-|-------------|---------------|--------------|
-| Statistical analysis | 200 | 300-400 |
-| Comprehensive report | 300 | 500-700 |
-| Topic report | 300 | 400-600 |
-| Personality profile (private) | 400 | 600-800 |
-| Personality profile (group) | 350 | 400-600 |
-| Brilliant quotes | 300 | 400-600 |
-| Legendary quotes | 300 | 400-600 |
+| 报告类型 | 最低行数 | 目标行数 |
+|----------|----------|----------|
+| 统计分析 | 200 | 300-400 |
+| 综合报告 | 300 | 500-700 |
+| 话题专题 | 300 | 400-600 |
+| 人格画像（私聊） | 400 | 600-800 |
+| 人格画像（群聊） | 350 | 400-600 |
+| 精彩发言（more/brilliant） | 300 | 400-600 |
+| 神人发言（more/legendary） | 300 | 400-600 |
+| 展示页（more/ 下） | 300 | 400-600 |
 
-## 5. Output Rendering
+## 5. 输出渲染
 
-### 5.1 Output Modes
+### 5.1 输出模式
 
-| Mode | Description | When to use |
-|------|-------------|-------------|
-| `html` (default) | Styled HTML with navigation | Most cases — polished, shareable |
-| `md` | Raw Markdown files | Quick review, further editing |
-| `all` | Both HTML and Markdown | When user wants both formats |
+| 模式 | 描述 | 适用场景 |
+|------|------|----------|
+| `md` | 核心 Markdown 输出（始终生成） | 核心分析、进一步编辑 |
+| `html`（默认，推荐） | 核心 + 样式化 HTML 渲染（推荐） | 大多数场景——精美、可分享 |
+| `all` | 核心 + 渲染 + 保留 md | md/ 受保护，不被后续重渲染覆盖或自动清理 |
 
-### 5.2 HTML Design Principles
+### 5.2 HTML 设计原则
 
-- **Apple-style aesthetic**: Clean, minimal, whitespace-heavy
-- **CSS variables**: Enable light/dark theme with single attribute toggle
-- **localStorage persistence**: Theme choice survives page navigation
-- **Responsive**: Mobile-friendly with media queries
-- **No external dependencies**: Pure CSS, no JS frameworks
-- **Breadcrumb navigation**: Every page shows its location
-- **Leaderboard**: Group chat homepage features interactive ranking
+- **多种预设主题**：Apple（简洁明亮）、Nord（冷色调柔和）、Dracula（暗紫浓郁）、Gruvbox（复古暖色）、Solarized（平衡低对比）
+- **CSS 变量**：通过单属性切换启用浅色/暗色主题
+- **localStorage 持久化**：主题选择跨页面保持
+- **响应式**：移动端友好的媒体查询
+- **无外部依赖**：纯 CSS，无 JS 框架
+- **面包屑导航**：每个页面显示其位置
+- **排行榜**：群聊首页展示交互式排名
 
-### 5.3 Navigation Structure
+### 5.3 导航结构
 
 ```
-index.html              — Main page (leaderboard for group chat)
-├── brilliant.html      — 精彩发言展示页
-├── legendary.html      — 神人发言展示页
-├── analyse/index.html  — Category index
-│   └── *.html          — Individual reports
-├── report/index.html
-│   └── *.html
-├── topic/index.html
-│   └── *.html
-└── personality/index.html
-    └── *.html
+.full/                 — 完整版形式目录（以下为此目录内的结构）
+├── index.html                     — 首页（群聊为排行榜）
+├── more/                          — 单页玩法（可选，Phase 0 用户选择后生成）
+│   ├── brilliant/
+│   │   └── index.html             — 精彩发言展示页
+│   └── legendary/
+│       └── index.html             — 神人发言展示页
+├── analyse/index.html             — 统计分析索引
+│   └── *.html                     — 各统计分析报告
+├── report/index.html              — 综合报告索引
+│   └── *.html                     — 各综合报告
+├── topic/index.html               — 话题专题索引
+│   └── *.html                     — 各话题专题报告
+├── personality/index.html         — 人格画像索引
+│   └── *.html                     — 各用户人格画像
+└── adventures/                       — 群聊历险日记（可选）
+    ├── index.html                 — 历险日记入口
+    └── <user>.html
 ```
 
-Each page has breadcrumb navigation: 首页 > 分类 > 文章
+> 以下为单个形式目录内的结构，完整的形式目录体系见 SKILL.md Phase 2.1。
 
-## 6. File Cleanup
+每个 `.xxx/` 形式目录（`.full/`、`.pure/`、`.sensitive/`、`.parts/`、`.whole/`）均包含上述完整结构，可独立部署。
 
-After task completion, clean up temporary and intermediate files while preserving essential outputs.
+每个页面都有面包屑导航：首页 > 分类 > 文章
 
-### Preserve
-- Original data (user-provided chat files, JSONL batches)
-- Finalized markdown documents (all report .md files)
-- Final output (html/ directory, chat_stats.json)
-- Generated scripts (in output/scripts/ for user reference)
+## 6. 文件清理
 
-### Clean Up
-- Intermediate text extracts from sub-agents (e.g., `*_messages.txt`)
-- Debug logs, temporary test outputs
-- Duplicate files from failed/retried agent runs
-- Empty or near-empty files that were superseded
+任务完成后，清理临时和中间文件，同时保留正式输出。
 
-### Timing
-Execute cleanup after Phase 3 rendering is complete, before reporting task completion to the user.
+### 保留
+- 原始数据（用户提供的聊天文件、JSONL 批次文件）
+- 最终 Markdown 文档（所有报告 .md 文件）
+- 最终输出（html/ 目录、chat_stats.json）
+- 生成的脚本（.output/scripts/ 目录下，供用户后续复用）
+
+### 清理
+- 子代理提取的中间文本片段（如 `*_messages.txt`）
+- 调试日志、临时测试输出
+- 失败/重试的子代理运行产生的冗余文件
+- 被替代的空文件或近空文件
+
+### 时机
+Phase 3 渲染完成后执行清理，在向用户报告任务完成之前。

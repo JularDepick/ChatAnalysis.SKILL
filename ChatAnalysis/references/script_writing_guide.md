@@ -1,47 +1,47 @@
-# Script Writing Guide for Chat Analysis
+# 聊天分析脚本编写指南
 
-This document contains patterns, conventions, and best practices for writing analysis scripts at runtime. Scripts are NOT pre-built — they are generated fresh for each task based on the actual data format.
+本文档包含运行时编写分析脚本的模式、约定和最佳实践。脚本不是预置的——每次任务根据实际数据格式现场生成。
 
-## Core Principle
+## 核心原则
 
-> Every chat export has subtle format differences. The script must adapt to the data, not the other way around.
-> Read the actual data first, then write the script.
+> 每次聊天导出都有细微的格式差异。脚本必须适配数据，而非反过来。
+> 先读取实际数据，再编写脚本。
 
 ---
 
-## 1. Parser Script Patterns
+## 1. 解析器脚本模式
 
-### 1.1 Text Format Parser
+### 1.1 文本格式解析器
 
-#### Detection Phase
+#### 检测阶段
 
-Before writing the parser, read the first 100-200 lines of the chat file to identify:
+编写解析器前，先读取聊天文件的前 100-200 行，识别：
 
-1. **Date header pattern** — How are dates/times marked?
-   - `## YYYY-MM-DD HH:MM` (QQ export)
-   - `YYYY-MM-DD HH:MM:SS` (WeChat export)
-   - `[YYYY.MM.DD HH:MM:SS]` (Telegram export)
-   - `MM/DD/YYYY, HH:MM -` (WhatsApp export)
-   - Custom format — build regex accordingly
+1. **日期头格式** — 日期/时间如何标记？
+   - `## YYYY-MM-DD HH:MM`（QQ 导出）
+   - `YYYY-MM-DD HH:MM:SS`（微信导出）
+   - `[YYYY.MM.DD HH:MM:SS]`（Telegram 导出）
+   - `MM/DD/YYYY, HH:MM -`（WhatsApp 导出）
+   - 自定义格式 — 据此构建正则表达式
 
-2. **Sender pattern** — How are senders identified?
-   - `Name：content` (Chinese colon)
-   - `Name: content` (English colon)
-   - `Name\ncontent` (newline-separated, WeChat style)
-   - `Name —` (Discord style)
+2. **发送者格式** — 发送者如何标识？
+   - `Name：content`（中文冒号）
+   - `Name: content`（英文冒号）
+   - `Name\ncontent`（换行分隔，微信风格）
+   - `Name —`（Discord 风格）
 
-3. **Media markers** — How are non-text messages marked?
-   - `[图片]`, `[Image]`, `[Photo]`
+3. **媒体标记** — 非文本消息如何标记？
+   - `[图片]`、`[Image]`、`[Photo]`
    - `[卡片消息: title]`
-   - `[表情]`, `[Sticker]`
-   - `[文件]`, `[File]`
+   - `[表情]`、`[Sticker]`
+   - `[文件]`、`[File]`
 
-4. **System messages** — What patterns indicate system events?
-   - `撤回了一条消息` (message recall)
-   - `加入了群聊` (join group)
-   - `红包` (red envelope)
+4. **系统消息** — 哪些模式表示系统事件？
+   - `撤回了一条消息`（消息撤回）
+   - `加入了群聊`（加入群聊）
+   - `红包`（红包）
 
-#### Format Detection via Scoring
+#### 格式检测（评分机制）
 
 当数据来源不明时，用评分机制自动检测格式。读取前 100 行，对每种已知格式的正则匹配计分，取最高分：
 
@@ -96,7 +96,7 @@ def detect_format(filepath):
 
 **要点：** 日期行权重高于发送人行（日期格式更具区分性）。新平台适配时只需往 `FORMAT_PATTERNS` 添加新条目。
 
-#### Parser Template
+#### 解析器模板
 
 ```python
 #!/usr/bin/env python3
@@ -181,35 +181,35 @@ def build_timestamp(date_str, time_str):
     return None
 ```
 
-### 1.2 JSONL Format Parser
+### 1.2 JSONL 格式解析器
 
-#### Detection Phase
+#### 检测阶段
 
-Read 5-10 lines of a `.jsonl` file to identify:
+读取 `.jsonl` 文件的前 5-10 行，识别：
 
-1. **Top-level fields** — What keys exist at the root?
+1. **顶层字段** — 根级有哪些字段？
    - `id`, `seq`, `timestamp`, `time`, `sender`, `type`, `content`, `recalled`, `system`
 
-2. **Sender object structure** — How is sender info nested?
-   - `sender.uin` — QQ number (stable identifier)
-   - `sender.uid` — Internal UID
-   - `sender.name` — Display name
-   - `sender.groupCard` — Group nickname (may change)
+2. **发送者对象结构** — 发送者信息如何嵌套？
+   - `sender.uin` — QQ 号（稳定标识）
+   - `sender.uid` — 内部 UID
+   - `sender.name` — 显示名
+   - `sender.groupCard` — 群昵称（可能变更）
 
-3. **Content object structure** — How is content nested?
-   - `content.text` — Plain text
-   - `content.html` — HTML formatted
-   - `content.elements` — Structured elements array
-   - `content.resources` — Media resources
+3. **内容对象结构** — 内容如何嵌套？
+   - `content.text` — 纯文本
+   - `content.html` — HTML 格式
+   - `content.elements` — 结构化元素数组
+   - `content.resources` — 媒体资源
 
-4. **Timestamp format** — How is time represented?
-   - `timestamp` field: milliseconds since epoch
-   - `time` field: ISO 8601 string
+4. **时间戳格式** — 时间如何表示？
+   - `timestamp` 字段：毫秒级 epoch 时间戳
+   - `time` 字段：ISO 8601 字符串
 
-5. **Message types** — What values does `type` field have?
+5. **消息类型** — `type` 字段有哪些值？
    - `text`, `image`, `forward`, `reply`, `system`
 
-#### Parser Template
+#### 解析器模板
 
 ```python
 #!/usr/bin/env python3
@@ -261,6 +261,28 @@ def get_sender_uin(msg):
     """Get sender's stable identifier (QQ number)."""
     return msg.get("sender", {}).get("uin", "unknown")
 
+def resolve_unique_names(messages):
+    """Build UIN → unique display name mapping.
+    When multiple UINs share the same display name, suffix each with (UIN).
+    """
+    raw_names = {}  # uin -> name
+    for msg in messages:
+        uin = get_sender_uin(msg)
+        if uin not in raw_names:
+            raw_names[uin] = get_sender_name(msg)
+    # Group by display name
+    name_to_uins = {}
+    for uin, name in raw_names.items():
+        name_to_uins.setdefault(name, []).append(uin)
+    # Disambiguate duplicates
+    unique_names = {}
+    for uin, name in raw_names.items():
+        if len(name_to_uins[name]) > 1:
+            unique_names[uin] = f"{name}({uin})"
+        else:
+            unique_names[uin] = name
+    return unique_names
+
 def parse_timestamp(msg):
     """Parse timestamp from message.
     Handles both ms-since-epoch and ISO string formats.
@@ -298,9 +320,9 @@ def extract_text(msg):
 
 ---
 
-## 2. Statistics Computation Patterns
+## 2. 统计计算模式
 
-### 2.1 Basic Statistics
+### 2.1 基础统计
 
 ```python
 def compute_basic_stats(messages, valid_msgs):
@@ -310,6 +332,13 @@ def compute_basic_stats(messages, valid_msgs):
     ))
     senders = Counter(get_sender_uin(m) for m in valid_msgs)
     msg_types = Counter(classify_message(m) for m in valid_msgs)
+
+    # Build UIN -> UID mapping
+    sender_uids = {}
+    for m in valid_msgs:
+        uin = get_sender_uin(m)
+        if uin != "unknown" and uin not in sender_uids:
+            sender_uids[uin] = m.get("sender", {}).get("uid", "")
 
     return {
         "total_messages": len(messages),
@@ -322,13 +351,14 @@ def compute_basic_stats(messages, valid_msgs):
             if dates else 0
         ),
         "senders": dict(senders.most_common()),
-        "sender_names": {uin: get_sender_name(m) for ...},
+        "sender_names": resolve_unique_names(valid_msgs),
+        "sender_uids": sender_uids,
         "message_types": dict(msg_types),
         "dates": dates,
     }
 ```
 
-### 2.2 Time Distribution
+### 2.2 时间分布
 
 ```python
 def compute_time_stats(valid_msgs):
@@ -336,24 +366,32 @@ def compute_time_stats(valid_msgs):
     weekday = defaultdict(int)
     monthly = defaultdict(int)
     daily = defaultdict(int)
+    daily_per_sender = defaultdict(lambda: defaultdict(int))
+    hourly_per_sender = defaultdict(lambda: defaultdict(int))
 
     for m in valid_msgs:
         ts = parse_timestamp(m)
+        sender = get_sender_uin(m)
         if ts:
             hourly[ts.hour] += 1
             weekday[ts.strftime("%A")] += 1
             monthly[ts.strftime("%Y-%m")] += 1
-            daily[ts.strftime("%Y-%m-%d")] += 1
+            day = ts.strftime("%Y-%m-%d")
+            daily[day] += 1
+            daily_per_sender[day][sender] += 1
+            hourly_per_sender[sender][ts.hour] += 1
 
     return {
         "hourly": dict(sorted(hourly.items())),
         "weekday": dict(weekday),
         "monthly": dict(sorted(monthly.items())),
         "daily": dict(sorted(daily.items())),
+        "daily_per_sender": {k: dict(sorted(v.items())) for k, v in daily_per_sender.items()},
+        "hourly_per_sender": {k: dict(sorted(v.items())) for k, v in hourly_per_sender.items()},
     }
 ```
 
-### 2.3 Chinese Word Extraction (No jieba)
+### 2.3 中文词提取（不依赖 jieba）
 
 ```python
 CHINESE_STOP_WORDS = set(
@@ -380,7 +418,7 @@ def extract_chinese_words(text, min_len=2, max_len=4):
     return words
 ```
 
-### 2.4 English Word Extraction
+### 2.4 英文词提取
 
 ```python
 def extract_english_words(text):
@@ -390,7 +428,7 @@ def extract_english_words(text):
 
 与中文词提取配合使用，合并为完整的词频统计。按用户分组统计可生成个人兴趣画像。
 
-### 2.5 Message Length Distribution
+### 2.5 消息长度分布
 
 按消息长度分段统计，用于分析用户发言风格：
 
@@ -414,7 +452,7 @@ length_dist = {
 
 **分段含义：** 1-5（表情/语气词）、6-20（短句）、21-50（正常消息）、51-100（长消息）、100+（长文/转发说明）。
 
-### 2.6 Per-Sender Word Frequency
+### 2.6 逐用户词频
 
 逐用户统计词频，用于人格画像的兴趣图谱分析：
 
@@ -434,7 +472,7 @@ sender_word_freq = {
 }
 ```
 
-### 2.7 Conversation Round Detection
+### 2.7 对话轮次检测
 
 ```python
 def detect_rounds(sorted_msgs, gap_seconds=1800):
@@ -459,7 +497,7 @@ def detect_rounds(sorted_msgs, gap_seconds=1800):
     return rounds
 ```
 
-### 2.8 Reply Speed Computation
+### 2.8 回复速度计算
 
 ```python
 def compute_reply_speed(sorted_msgs):
@@ -492,7 +530,49 @@ def compute_reply_speed(sorted_msgs):
     }
 ```
 
-### 2.9 Activity Cliff Detection (Group Chat)
+### 2.9 媒体分析统计
+
+```python
+def compute_media_stats(valid_msgs):
+    """Compute media-related statistics."""
+    images_by_sender = defaultdict(int)
+    images_by_date = defaultdict(int)
+    total_images = 0
+    total_text = 0
+    total_forwards = 0
+    total_replies = 0
+
+    for m in valid_msgs:
+        msg_type = classify_message(m)
+        ts = parse_timestamp(m)
+        sender = get_sender_uin(m)
+
+        if msg_type == "image":
+            total_images += 1
+            images_by_sender[sender] += 1
+            if ts:
+                images_by_date[ts.strftime("%Y-%m-%d")] += 1
+        elif msg_type == "text":
+            total_text += 1
+        elif msg_type == "forward":
+            total_forwards += 1
+        elif msg_type == "reply":
+            total_replies += 1
+
+    image_text_ratio = round(total_images / total_text, 4) if total_text > 0 else 0
+
+    return {
+        "total_images": total_images,
+        "total_text": total_text,
+        "total_forwards": total_forwards,
+        "total_replies": total_replies,
+        "image_text_ratio": image_text_ratio,
+        "images_by_sender": dict(images_by_sender),
+        "images_by_date": dict(sorted(images_by_date.items())),
+    }
+```
+
+### 2.10 活动断层检测（群聊）
 
 ```python
 def detect_activity_cliffs(senders_sorted):
@@ -530,101 +610,32 @@ def detect_activity_cliffs(senders_sorted):
 
 ---
 
-## 3. HTML Rendering Patterns
+## 3. HTML 渲染模式
 
-### 3.1 Apple-Style CSS Design System
+### 3.1 CSS 设计系统
 
-Use CSS variables for light/dark theme support:
+完整的 CSS 变量体系、5 种预设主题色值、布局系统见 `frontend_spec.md` 第 2 节。本节仅列出脚本生成时的关键约定：
 
-```css
-:root {
-    --bg-primary: #ffffff;
-    --bg-secondary: #f5f5f7;
-    --text-primary: #1d1d1f;
-    --text-secondary: #86868b;
-    --border-color: rgba(0,0,0,0.08);
-    --accent: #007aff;
-    --accent-hover: #0056b3;
-    --code-bg: #f5f5f7;
-    --code-color: #c0392b;
-    --pre-color: #6c5ce7;
-    --table-header-bg: #f5f5f7;
-    --hover-bg: rgba(0,0,0,0.03);
-    --shadow: rgba(0,0,0,0.05);
-    --blockquote-bg: rgba(0,122,255,0.04);
-    --blockquote-border: #007aff;
-}
+- 所有颜色、间距、圆角通过 CSS 变量引用，禁止硬编码色值
+- 主题切换通过 `[data-theme="dark"]` 选择器实现
+- Python 脚本中用 `build_css(theme_name)` 函数注入主题变量到 `:root`
+- 每个 `.xxx/` 形式目录独立包含 `.assets/style.css`，不跨目录引用
 
-[data-theme="dark"] {
-    --bg-primary: #000000;
-    --bg-secondary: #1c1c1e;
-    --text-primary: #f5f5f7;
-    --text-secondary: #98989f;
-    --border-color: rgba(255,255,255,0.12);
-    --accent: #0a84ff;
-    --accent-hover: #409cff;
-    --code-bg: #1c1c1e;
-    --code-color: #f48fb1;
-    --pre-color: #ce93d8;
-    --table-header-bg: #1c1c1e;
-    --hover-bg: rgba(255,255,255,0.04);
-    --shadow: rgba(0,0,0,0.3);
-    --blockquote-bg: rgba(10,132,255,0.08);
-    --blockquote-border: #0a84ff;
-}
-```
+### 3.2 字体栈
 
-### 3.2 Font Stack
+字体定义见 `frontend_spec.md` 2.2 节。核心字体栈：`-apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif`。
 
-```css
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
-                 "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-    -webkit-font-smoothing: antialiased;
-}
-```
+### 3.3 主题切换（localStorage）
 
-### 3.3 Theme Toggle with localStorage
+主题切换的完整 HTML/CSS/JS 实现见 `frontend_spec.md` 2.4 节。关键要点：
 
-Every page must include this for flash-free theme initialization:
+- `<head>` 中内联初始化脚本（防闪烁）
+- 切换按钮使用 `aria-label="切换主题"`
+- `localStorage` 持久化用户选择，跨页面保持
 
-```html
-<!-- In <head>, before any visible content -->
-<script>
-(function() {
-    var t = localStorage.getItem('theme') || 'light';
-    if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-})();
-</script>
+### 3.4 排行榜组件（群聊）
 
-<!-- Theme toggle button -->
-<button class="theme-toggle" id="themeToggle">🌙 暗色</button>
-
-<!-- Toggle script, before </body> -->
-<script>
-(function() {
-    var btn = document.getElementById('themeToggle');
-    if (!btn) return;
-    function apply(t) {
-        if (t === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            btn.textContent = '☀️ 浅色';
-        } else {
-            document.documentElement.removeAttribute('data-theme');
-            btn.textContent = '🌙 暗色';
-        }
-    }
-    apply(localStorage.getItem('theme') || 'light');
-    btn.addEventListener('click', function() {
-        var next = localStorage.getItem('theme') === 'dark' ? 'light' : 'dark';
-        localStorage.setItem('theme', next);
-        apply(next);
-    });
-})();
-</script>
-```
-
-### 3.4 Leaderboard Component (Group Chat)
+HTML 结构如下，完整 CSS 见 `frontend_spec.md` 4.2 节。
 
 ```html
 <a class="leaderboard-item" href="personality/用户名.html">
@@ -637,7 +648,9 @@ Every page must include this for flash-free theme initialization:
 </a>
 ```
 
-### 3.5 Danger/Warning Block (High-Risk Content)
+### 3.5 危险/警告区块（高风险内容）
+
+完整样式见 `frontend_spec.md` 4.3 节。HTML 结构：
 
 ```html
 <div class="danger-block">
@@ -645,33 +658,17 @@ Every page must include this for flash-free theme initialization:
 </div>
 ```
 
-```css
-.danger-block {
-    border-left: 4px solid #ff3b30;
-    background: rgba(255,59,48,0.06);
-    padding: 14px 18px;
-    margin: 16px 0;
-    border-radius: 0 10px 10px 0;
-}
-.danger-block::before {
-    content: "⚠️ 高危提醒";
-    display: block;
-    font-weight: 700;
-    color: #ff3b30;
-    margin-bottom: 8px;
-    font-size: 0.9em;
-}
-```
+CSS 使用 `var(--danger)` 变量（非硬编码色值），暗色模式下自动适配。
 
-### 3.6 Markdown Extensions
+### 3.6 Markdown 扩展
 
-Use the `markdown` Python library with these extensions:
+使用 `markdown` Python 库，配合以下扩展：
 
 ```python
 EXTENSIONS = ["tables", "fenced_code", "toc", "nl2br", "sane_lists", "smarty"]
 ```
 
-Convert danger blocks from markdown blockquotes:
+将 Markdown 引用块转换为危险区块：
 ```python
 html = re.sub(
     r'<blockquote>\s*<p>\s*⚠️\s*<strong>高危提醒</strong>\s*⚠️(.*?)</blockquote>',
@@ -680,7 +677,7 @@ html = re.sub(
 )
 ```
 
-### 3.7 Media Embedding
+### 3.7 媒体嵌入
 
 报告中引用媒体文件时，**必须使用 HTML 标签**（`<img>`、`<audio>`、`<video>`），不能用纯文本占位符。关键是固定一个维度（width 或 height）到固定 px 值，不超过屏幕较短一边的 50%。
 
@@ -689,22 +686,22 @@ html = re.sub(
 **图片：**
 ```html
 <!-- 固定宽度（推荐，大多数场景） -->
-<img src="resources/images/photo.jpg" alt="描述" style="max-width: 360px; height: auto; border-radius: 8px;">
+<img src="resources/images/photo.jpg" alt="描述" style="max-width: min(360px, 50vw); height: auto; border-radius: 10px;">
 
 <!-- 固定高度（竖图/长图） -->
-<img src="resources/images/tall.jpg" alt="描述" style="max-height: 360px; width: auto; border-radius: 8px;">
+<img src="resources/images/tall.jpg" alt="描述" style="max-height: min(360px, 50vw); width: auto; border-radius: 10px;">
 ```
 
 **音频：**
 ```html
-<audio controls style="width: 360px;">
+<audio controls style="max-width: min(360px, 50vw); width: 100%;">
     <source src="resources/audio/voice.mp3" type="audio/mpeg">
 </audio>
 ```
 
 **视频：**
 ```html
-<video controls style="max-width: 360px; border-radius: 8px;">
+<video controls style="max-width: min(360px, 50vw); border-radius: 10px;">
     <source src="resources/video/clip.mp4" type="video/mp4">
 </video>
 ```
@@ -713,73 +710,37 @@ html = re.sub(
 - 取 `min(360px, 50vw)` 作为基准值（360px 在大多数屏幕上 < 50vw）
 - 横图固定 width，竖图固定 height，另一维度 `auto` 保持比例
 - 不使用百分比宽度（避免在不同布局下溢出）
-- 所有媒体标签加 `border-radius: 8px` 保持圆角风格
+- 所有媒体标签加 `border-radius: 10px` 保持圆角风格（对应 `--radius-md`）
 
 **Markdown 中的写法：** 在 md 文件中直接写 HTML 标签，不要用 `![alt](url)` 语法（无法控制尺寸）：
 ```markdown
-<img src="resources/images/screenshot.png" alt="截图" style="max-width: 360px; height: auto; border-radius: 8px;">
+<img src="resources/images/screenshot.png" alt="截图" style="max-width: min(360px, 50vw); height: auto; border-radius: 10px;">
 ```
 
 **善用原始媒体：** 报告引用聊天原文时，如果原始消息包含图片/音频/视频，应主动将对应媒体嵌入报告。媒体是聊天的重要组成部分，图文并茂的报告比纯文字更有质感。
 
-**选择性复制：** 只有实际被报告引用的媒体文件才复制到输出 `resources/` 目录。不要全量复制原始数据中的媒体。
+**选择性迁移：** 只有实际被报告引用的媒体文件才从 `data/` 迁移到对应 `.xxx/` 形式目录的 `resources/` 下。不要全量复制原始数据中的媒体。
 
-### 3.8 CSS Theme System (Python Dict → CSS Variables)
+### 3.8 CSS 主题系统（Python Dict → CSS 变量）
 
-用 Python 字典定义主题色值，运行时生成 CSS 变量注入页面。这样 Agent 可按需调整配色而不用改 HTML 结构：
+完整的 5 种预设主题（Apple、Nord、Dracula、Gruvbox、Solarized）Python 字典定义见 `frontend_spec.md` 2.3 节。
 
-```python
-THEMES = {
-    "light": {
-        "bg": "#fafafa", "surface": "#ffffff", "surface2": "#f0f4f8",
-        "text": "#2d3748", "text-muted": "#718096",
-        "accent": "#c0392b", "link": "#2b6cb0",
-        "code-bg": "#f7fafc", "code-color": "#c0392b", "pre-color": "#6c5ce7",
-        "border": "#e2e8f0", "success": "#27ae60", "warning": "#d35400",
-        "strong": "#1a202c", "blockquote-bg": "#fff5ff",
-        "hover-bg": "rgba(0,0,0,0.02)",
-    },
-    "dark": {
-        "bg": "#1a1a2e", "surface": "#16213e", "surface2": "#0f3460",
-        "text": "#e0e0e0", "text-muted": "#a0a0b0",
-        "accent": "#e94560", "link": "#4fc3f7",
-        "code-bg": "#0d1b2a", "code-color": "#f48fb1", "pre-color": "#ce93d8",
-        "border": "#2a2a4a", "success": "#66bb6a", "warning": "#ffa726",
-        "strong": "#ffffff", "blockquote-bg": "#16213e",
-        "hover-bg": "rgba(255,255,255,0.03)",
-    },
-}
+**实现要点：**
+- 用 Python 字典定义主题色值，运行时 `build_css(theme_name)` 生成 CSS 变量注入 `:root`
+- 每个主题含 light/dark 两个变体字典
+- 所有 CSS 规则引用变量（如 `var(--accent)`），禁止硬编码色值
+- 主题切换只需重新调用 `build_css()` 生成不同 CSS，无需修改 HTML 结构
 
-def build_css(theme_name):
-    t = THEMES.get(theme_name, THEMES["light"])
-    return f"""
-<style>
-:root {{
-    --bg: {t['bg']}; --surface: {t['surface']}; --surface2: {t['surface2']};
-    --text: {t['text']}; --text-muted: {t['text-muted']};
-    --accent: {t['accent']}; --link: {t['link']};
-    --code-bg: {t['code-bg']}; --border: {t['border']};
-    --success: {t['success']}; --warning: {t['warning']};
-}}
-/* ... 其余 CSS 规则 ... */
-</style>
-"""
-```
-
-**要点：** 主题切换只需重新调用 `build_css("dark")` 生成不同 CSS，无需修改 HTML 结构。
-
-### 3.9 Category Name Auto-Detection
+### 3.9 分类名自动检测
 
 从 md 目录结构自动发现分类，映射为中文显示名：
 
 ```python
 DEFAULT_CAT_NAMES = {
-    "analyse": "数据分析",
+    "analyse": "统计分析",
     "report": "综合报告",
     "topic": "话题专题",
     "personality": "人格画像",
-    "stats": "统计分析",
-    "analysis": "深度分析",
 }
 
 # 运行时扫描目录，未知分类名直接用目录名
@@ -789,9 +750,9 @@ for d in os.listdir(md_dir):
         cat_names[d] = d
 ```
 
-### 3.10 Page Generation Pattern
+### 3.10 页面生成模式
 
-每个 md 文件 → 一个 html 页面，包含面包屑导航：
+每个 md 文件 → 一个 html 页面，包含面包屑导航。以下代码模板适用于分组模式（md/ 下有子目录）；扁平模式下（md/ 下所有 .md 直接在同一目录），Agent 需自行适配遍历逻辑（直接遍历 md/ 下的 .md 文件，不进入子目录）。
 
 ```python
 def convert_file(md_path, html_path, category, filename, css, cat_names, footer=""):
@@ -803,9 +764,9 @@ def convert_file(md_path, html_path, category, filename, css, cat_names, footer=
 
     nav = (
         f'<div class="nav">'
-        f'<a href="../../html/index.html">首页</a>'
+        f'<a href="../index.html">首页</a>'
         f'<span class="sep">›</span>'
-        f'<a href="../../html/{category}/index.html">{cat_name}</a>'
+        f'<a href="index.html">{cat_name}</a>'
         f'<span class="sep">›</span>'
         f'{title}</div>\n'
     )
@@ -818,9 +779,9 @@ def convert_file(md_path, html_path, category, filename, css, cat_names, footer=
         f.write(page)
 ```
 
-**面包屑路径规律：** 子页面用 `../../html/`，分类索引用 `../index.html`。
+**面包屑路径规律：** 子页面用 `../index.html`（返回首页），分类索引用 `index.html`（当前分类索引页）。
 
-### 3.11 Index Page Generation
+### 3.11 索引页生成
 
 两类索引页：分类索引（列出该分类下所有文件）和主页索引（列出所有分类及其文件）：
 
@@ -850,7 +811,23 @@ def generate_main_index(all_files, css, cat_names, footer=""):
     return make_page("聊天记录深度分析", "", body, css, footer)
 ```
 
-### 3.12 File Tree Traversal
+### 3.12 同类链接收起（<details> 折叠）
+
+当某个页面中同类链接超过 5 个时，使用 `<details>` 标签收起，默认折叠，用户点击展开。适用于所有包含链接列表的页面（首页、子索引页等）。
+
+```html
+<details>
+  <summary>话题专题（N 篇）</summary>
+  <ul>
+    <li><a href="topic/xxx.html">话题1</a></li>
+    <!-- ... -->
+  </ul>
+</details>
+```
+
+**判断逻辑：** 在索引页生成时，如果某个分类下的链接数 > 5，则将该分类的链接列表包裹在 `<details>` 中。链接数 ≤ 5 时直接展示。
+
+### 3.13 文件树遍历
 
 渲染整个 md 目录树为 html 的流程：
 
@@ -882,23 +859,13 @@ def main():
     # ... 写入 index.html
 ```
 
-### 3.13 Footer Link Support
+### 3.14 页脚链接支持
 
-页脚链接通过 CLI 参数 `--footer-link` 控制，用户允许时注入：
-
-```python
-FOOTER_HTML = '<div class="footer"><a href="https://github.com/JularDepick/ChatAnalysis.SKILL" target="_blank" rel="noopener noreferrer">SKILL技术支持·ChatAnalysis</a></div>'
-
-# CSS
-.footer { margin-top: 40px; padding: 16px 0; border-top: 1px solid var(--border);
-          text-align: center; font-size: 0.82em; color: var(--text-muted); }
-.footer a { color: var(--text-muted); }
-.footer a:hover { color: var(--link); }
-```
+页脚链接通过 CLI 参数 `--footer-link` 控制（布尔标志，无额外值），用户允许时注入。完整 HTML/CSS 见 `frontend_spec.md` 7.3 节。
 
 所有 `make_page`、`convert_file`、`generate_index`、`generate_main_index` 都接受 `footer=""` 参数透传。
 
-### 3.14 Time Merging for Chat Display
+### 3.15 时间合并显示
 
 前端展示聊天记录时，合并连续消息的时间显示：5 分钟内无中断的消息归入同一个起始时间戳下。原始数据保留每条消息的完整时间，仅在渲染层合并。
 
@@ -948,9 +915,9 @@ def merge_time_display(messages, gap_seconds=300):
 - 分组阈值可调（默认 5 分钟）
 - Markdown 报告中同样适用此分组逻辑
 
-### 3.15 Whole-Page Chat Record
+### 3.16 完整聊天记录长页
 
-生成完整聊天记录的单页 HTML（`html/.whole-page/chat.html`），用于浏览全部原始消息。
+生成完整聊天记录的单页 HTML（`html/.whole/chat.html`），用于浏览全部原始消息。
 
 **结构：**
 ```python
@@ -971,7 +938,8 @@ def generate_whole_page(messages, css, footer=""):
             content = m["content"]
             msg_type = m.get("msg_type", "text")
 
-            # 敏感内容判断（根据实际标记逻辑）
+            # 敏感内容判断（需根据 SKILL.md 敏感内容处理规则实现）
+            # is_sensitive(m) 为占位函数，Agent 需根据 Phase 0.3 第 11 项配置和敏感内容定义自行实现
             if is_sensitive(m):
                 body_parts.append(
                     f'  <details><summary>⚠️ 敏感内容（点击展开）</summary>'
@@ -998,95 +966,76 @@ def format_msg(sender, content, msg_type):
         return f'<div class="msg"><span class="sender">{sender}：</span>{content}</div>'
 ```
 
-**CSS 补充：**
-```css
-.time-group { margin-bottom: 16px; }
-.time-header {
-    text-align: center; font-size: 0.78em; color: var(--text-muted);
-    margin: 16px 0 8px; padding: 4px 12px;
-    background: var(--surface2); border-radius: 12px; display: inline-block;
-}
-.msg { padding: 4px 0; line-height: 1.7; }
-.msg .sender { font-weight: 600; color: var(--accent); }
-.msg.system { color: var(--text-muted); font-size: 0.88em; text-align: center; }
-.msg .card { color: var(--text-muted); font-style: italic; }
-```
+**CSS：** 时间分组和消息样式见 `frontend_spec.md` 4.6 节。
 
 **要点：**
 - 媒体用 `<a>` 链接而非 `<img>` 内嵌，避免页面过大
-- 敏感内容用 `<details>` 折叠，与 `.completed-hidden/` 同逻辑
-- 使用时间合并显示（3.14 节），减少时间戳噪音
+- 敏感内容用 `<details>` 折叠，与 `.full/` 同逻辑
+- 使用时间合并显示（3.15 节），减少时间戳噪音
 - 页脚链接按用户配置注入
 
 **放置位置与相对路径：**
 
 | 放置位置 | 输出路径 | 从首页 index.html 的相对路径 | 从分类页的相对路径 |
 |---------|---------|--------------------------|------------------|
-| 放入 html/（推荐） | `html/.whole-page/chat.html` | `.whole-page/chat.html` | `../.whole-page/chat.html` |
-| 单独目录 | `.output/.whole-page/chat.html` | `../.whole-page/chat.html` | `../../whole-page/chat.html` |
+| 放入 html/（推荐） | `html/.whole/chat.html` | `.whole/chat.html` | `../.whole/chat.html` |
+| 单独目录 | `.output/.whole/chat.html` | `../.whole/chat.html` | `../../.whole/chat.html` |
 
 不同输出形式可能被迁移到其他目录，因此：
-- **放入 html/** — whole-page 与各 HTML 页面同目录树，相对路径稳定，推荐此方式并允许添加链接
+- **放入 html/** — `.whole/` 与各 HTML 页面同目录树，相对路径稳定，推荐此方式并允许添加链接
 - **单独目录** — whole-page 与 html/ 平级，迁移后相对路径不确定，**强烈不建议添加跨目录链接**
 
 **首页跳转链接：** 仅当用户选择放入 html/ 且允许链接时，在首页 `index.html` 添加入口按钮：
 ```html
-<a class="btn-whole-page" href=".whole-page/chat.html">📄 查看完整聊天记录</a>
+<a class="btn-whole-page" href=".whole/chat.html">📄 查看完整聊天记录</a>
 ```
-```css
-.btn-whole-page {
-    display: inline-block; padding: 10px 20px; margin: 12px 0;
-    background: var(--accent); color: #fff; border-radius: 8px;
-    text-decoration: none; font-size: 0.92em;
-}
-.btn-whole-page:hover { opacity: 0.85; text-decoration: none; }
-```
+CSS 见 `frontend_spec.md` 4.7 节。
 
 ---
 
-## 4. Platform-Specific Adaptations
+## 4. 平台适配
 
 ### 4.1 QQ
 
-- JSONL format from QCE (QQ Chat Exporter)
-- Sender identified by `uin` (QQ number, stable) and `uid` (internal)
-- Group nickname in `sender.groupCard`
-- Bot accounts common in groups
-- Forward messages (`type: "forward"`)
-- Reply messages (`type: "reply"`)
+- JSONL 格式，来自 QCE（QQ Chat Exporter）等导出工具
+- 发送者通过 `uin`（QQ 号，稳定标识）和 `uid`（内部标识）识别
+- 群昵称在 `sender.groupCard` 字段
+- 群聊中常见 Bot 账号
+- 转发消息（`type: "forward"`）
+- 回复消息（`type: "reply"`）
 
-### 4.2 WeChat
+### 4.2 微信
 
-- Text format, often with `Name\ncontent` (newline separated)
-- Timestamp format: `YYYY-MM-DD HH:MM:SS`
-- Image tag: `[图片]`
-- May have `[动画表情]` for animated stickers
+- 文本格式，通常为 `Name\ncontent`（换行分隔）
+- 时间戳格式：`YYYY-MM-DD HH:MM:SS`
+- 图片标记：`[图片]`
+- 可能有 `[动画表情]`（动态表情）
 
 ### 4.3 Telegram
 
-- Text format with `[YYYY.MM.DD HH:MM:SS]` timestamps
-- Sender: `Name: content`
-- `[Photo]`, `[Video]`, `[Document]` media tags
-- Reply chains via message ID references
+- 文本格式，时间戳为 `[YYYY.MM.DD HH:MM:SS]`
+- 发送者格式：`Name: content`
+- 媒体标记：`[Photo]`、`[Video]`、`[Document]`
+- 通过消息 ID 引用实现回复链
 
 ### 4.4 Discord
 
-- Text format with `[YYYY-MM-DD HH:MM]` timestamps
-- Sender: `Name —` or `Name:`
-- Rich embeds, reactions, threads
+- 文本格式，时间戳为 `[YYYY-MM-DD HH:MM]`
+- 发送者格式：`Name —` 或 `Name:`
+- 支持富嵌入、表情回应、帖子
 
 ### 4.5 WhatsApp
 
-- Text format with `MM/DD/YYYY, HH:MM -` timestamps
-- Sender: `Name: content`
-- `<Media omitted>` for media messages
-- System messages for join/leave/admin changes
+- 文本格式，时间戳为 `MM/DD/YYYY, HH:MM -`
+- 发送者格式：`Name: content`
+- 媒体消息标记：`<Media omitted>`
+- 加入/退出/管理员变更的系统消息
 
 ---
 
-## 5. Error Handling Conventions
+## 5. 错误处理规范
 
-### 5.1 Windows Compatibility
+### 5.1 Windows 兼容性
 
 ```python
 import sys
@@ -1095,30 +1044,30 @@ if sys.platform == "win32":
     sys.stdout.reconfigure(encoding='utf-8')
 ```
 
-- Use `python` instead of `python3` on Windows
-- Use forward slashes in paths when possible
-- Handle encoding explicitly: always use `encoding='utf-8'` in file operations
+- Windows 上使用 `python` 而非 `python3`
+- 尽量使用正斜杠路径
+- 显式处理编码：文件操作始终使用 `encoding='utf-8'`
 
-### 5.2 Data Validation
+### 5.2 数据验证
 
-After parsing, validate:
-- Total message count > 0
-- Date range is non-empty
-- At least 1 sender found
-- No unexpected zero-message periods
+解析后验证：
+- 总消息数 > 0
+- 日期范围非空
+- 至少找到 1 个发送者
+- 无异常的零消息时段
 
-### 5.3 Graceful Degradation
+### 5.3 优雅降级
 
-- If timestamp parsing fails, use `None` and skip time-based analysis
-- If sender name is missing, use UIN or "unknown"
-- If message type is unrecognized, classify as "text"
-- Always produce partial results rather than crashing
+- 时间戳解析失败时使用 `None`，跳过时间分析
+- 发送者名称缺失时使用 UIN 或 "unknown"
+- 消息类型未识别时归类为 "text"
+- 始终产出部分结果，而非崩溃
 
 ---
 
-## 6. Output JSON Structure
+## 6. 输出 JSON 结构
 
-The parser script should output `chat_stats.json` with this structure:
+JSON 结构定义见 SKILL.md 第 1.4 节，本节提供实现示例。解析器脚本应输出 `chat_stats.json`，结构如下：
 
 ```json
 {
@@ -1170,17 +1119,17 @@ The parser script should output `chat_stats.json` with this structure:
         "images_by_date": {"2026-03-17": 50, "2026-03-18": 40}
     },
     "keywords": {
-        "technology": 201,
-        "entertainment": 207,
-        "school": 223,
-        "food": 430,
-        "emotion": 214,
-        "social": 1457,
-        "anime": 73,
-        "gaming": 410
+        "科技/AI": 201,
+        "娱乐": 207,
+        "学业/职场": 223,
+        "日常生活": 430,
+        "情绪": 214,
+        "社交/关系": 1457,
+        "二次元/游戏": 73,
+        "Bot 互动": 410
     },
     "keywords_by_sender": {
-        "uin1": {"technology": 50, "gaming": 100}
+        "uin1": {"科技/AI": 50, "Bot 互动": 100}
     },
     "user_stats": {
         "uin1": {
@@ -1196,16 +1145,19 @@ The parser script should output `chat_stats.json` with this structure:
             "keyword_profile": {"gaming": 100, "social": 200}
         }
     },
-    "top10_users": ["uin1", "uin2", "uin3", "..."],
+    "top_users": ["uin1", "uin2", "uin3", "..."],
     "meta": {
-        "batch_dir": "message_batches",
-        "parsed_at": "2026-05-30T22:00:00",
-        "focus_users": ["uin1", "uin2"]
+        "source_file": "chat.txt",
+        "format": "text",
+        "platform": "QQ",
+        "mode": "group",
+        "focus_users": ["uin1"],
+        "parsed_at": "2026-05-30T22:00:00"
     }
 }
 ```
 
-### 6.1 Console Summary Output
+### 6.1 控制台摘要输出
 
 解析完成后打印摘要到控制台，方便 Agent 快速验证：
 
@@ -1225,26 +1177,28 @@ print(f"Keyword hits:    {stats['keywords']}")
 print(f"{'='*50}")
 ```
 
-### 6.2 Metadata Section
+### 6.2 元数据段落
 
 JSON 输出的 `meta` 字段记录解析上下文，供后续报告引用：
 
 ```python
 stats["meta"] = {
     "source_file": os.path.basename(chat_file),  # 原始文件名
-    "format": fmt,                                 # 检测到的格式
-    "author_name": author_name,                    # 焦点用户
+    "format": fmt,                                 # 检测到的格式（text/jsonl）
+    "platform": platform,                          # 聊天平台（QQ/WeChat/Telegram 等）
+    "mode": mode,                                  # 聊天模式（group/private）
+    "focus_users": focus_users,                    # 焦点用户 UIN 列表
     "parsed_at": datetime.now().isoformat(),       # 解析时间
 }
 ```
 
 ---
 
-## 7. Performance Tips
+## 7. 性能指南
 
-- Load all messages into memory for cross-batch analysis (25K messages ≈ 50MB)
-- Use `Counter` and `defaultdict` for efficient aggregation
-- Sort messages by timestamp once, then reuse the sorted list
-- For Chinese word extraction, limit n-gram range to 2-4 characters
-- For HTML rendering, process files sequentially (not in memory all at once)
-- Use `os.makedirs(..., exist_ok=True)` to avoid directory creation errors
+- 将所有消息加载到内存进行跨批分析（25K 消息 ≈ 50MB）
+- 使用 `Counter` 和 `defaultdict` 进行高效聚合
+- 按时间戳排序一次，然后复用排序后的列表
+- 中文词提取时，n-gram 范围限制为 2-4 个字符
+- HTML 渲染时，顺序处理文件（不要一次性全部加载到内存）
+- 使用 `os.makedirs(..., exist_ok=True)` 避免目录创建错误
